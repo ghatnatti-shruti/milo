@@ -372,7 +372,6 @@ export function trigger({
   animatedElement = undefined,
   animationType = undefined,
 } = {}) {
-  debugger
   if (event) event.preventDefault();
   const isOpen = element?.getAttribute('aria-expanded') === 'true';
   closeAllDropdowns({ type, animatedElement, animationType });

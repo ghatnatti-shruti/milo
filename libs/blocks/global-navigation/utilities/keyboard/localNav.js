@@ -1,6 +1,8 @@
-import { selectors, getNextVisibleItemPosition, getPreviousVisibleItemPosition } from './utils.js';
-import { closeAllDropdowns, trigger } from '../utilities.js';
-import MobilePopup from './mobilePopup.js';
+import { selectors, getNextVisibleItemPosition, getPreviousVisibleItemPosition, getOpenPopup } from './utils.js';
+import { trigger } from '../utilities.js';
+
+const focusables = (root) =>
+    [...root.querySelectorAll('a[href],button:not([disabled])')];
 
 class LocalNavItem {
   constructor() {
@@ -9,15 +11,15 @@ class LocalNavItem {
     this.exitLink = this.localNav?.querySelector(selectors.localNavExit);
     this.addEventListeners();
     this.desktop = window.matchMedia('(min-width: 900px)');
-    this.mobilePopup = new MobilePopup({ mainNav: this });
   }
 
   getState = () => {
-    const items = [...document.querySelectorAll(selectors.mainNavItems)];
+    const items = [...document.querySelectorAll(selectors.localNavItems)];
     const openTrigger = document.querySelector(selectors.expandedPopupTrigger);
     const currentEl = document.activeElement
       .closest(selectors.localNavItem)
-      ?.querySelector(selectors.mainNavItems);
+      ?.querySelector(selectors.localNavItems);
+
     const curr = items.findIndex((el) => el === currentEl);
     return {
       items,
@@ -28,30 +30,7 @@ class LocalNavItem {
     };
   };
 
-  focusCurr = () => {
-    const { items, curr } = this.getState();
-    items[curr].focus();
-  };
-
-  focusPrev = ({ focus } = {}) => {
-    const { items, prev } = this.getState();
-    const open = document.querySelector(selectors.expandedPopupTrigger);
-    // closeAllDropdowns();
-    if (prev === -1) return;
-    items[prev].focus();
-    if (open) {
-      this.open({ focus });
-    }
-  };
-
-  focusNext = () => {
-    const { items, next } = this.getState();
-    if (next === -1) return;
-    console.log(items[next])
-    items[next].focus();
-  };
-
-  open = ({ focus, triggerEl, e } = {}) => {
+  open = ({ triggerEl, e } = {}) => {
     const { items, curr } = this.getState();
     const triggerElement = triggerEl || items[curr];
     if (!triggerElement || !triggerElement.hasAttribute('aria-haspopup')) return;
@@ -59,33 +38,44 @@ class LocalNavItem {
     if (triggerElement.getAttribute('aria-expanded') === 'false') {
       trigger({ element: triggerElement, type: 'localNavItem' });
     }
-    // const navItem = triggerElement.parentElement;
-    // const popupEl = navItem.querySelector(selectors.popup);
-    // if (popupEl) {
-    //   if (this.desktop.matches) {
-    //     this.popup.open({ focus });
-    //   } else {
-    //     this.mobilePopup.open({ focus });
-    //   }
-    //   return;
-    // }
-
-    // We need to wait for the popup to be added to the DOM before we can open it.
-    // const observer = new MutationObserver(() => {
-    //   observer.disconnect();
-    //   if (this.desktop.matches) {
-    //     this.popup.open({ focus });
-    //   } else {
-    //     this.mobilePopup.open({ focus });
-    //   }
-    // });
-    // observer.observe(navItem, { childList: true });
   };
+  
+  openDropdown = (triggerEl) => {
+    this.open({ triggerEl });
+  }
+
+  getNavList = () => {
+    const navItems = [...document.querySelector('.feds-localnav-items').children];
+    const list = [];
+
+    navItems.forEach(item => {
+      const trigger  = item.querySelector('a,button');
+      if (!trigger) return;
+
+      list.push(trigger);
+      if (trigger.matches('[aria-haspopup="true"][aria-expanded="true"]')) {
+        list.push(...focusables(item.querySelector('.feds-popup')));
+      }
+    });
+    return list;
+  }
+  
+  navigate = (current, dir) => {
+    const allItems = this.getNavList();
+    const currIdx = allItems.indexOf(current);
+    const isHeader = current.classList.contains('feds-localnav-title')
+    if (currIdx === -1 && !isHeader) return;
+    const next = allItems[(currIdx + dir + allItems.length) % allItems.length];
+    next.focus();
+
+    if (next.matches('[aria-haspopup="true"]')) {
+      this.openDropdown(next);
+    }
+  }
 
   handleKeyDown = (e) => {
     const { code, target } = e;
     const isHeadline = target.classList.contains(selectors.headline.slice(1));
-    console.log(code)
     switch (code) {
       case 'Space':
       case 'Enter':
@@ -105,39 +95,24 @@ class LocalNavItem {
         }
         break;
 
-      case 'ArrowDown': {
+      case 'ArrowDown':
+      case 'ArrowUp': {
         e.stopPropagation();
         e.preventDefault();
-        const { items, curr } = this.getState();
-        if (items[curr] && items[curr].hasAttribute('aria-haspopup')) {
-          this.open({ focus: 'first' });
-          return;
-        }
-        this.focusNext();
+        const dir = code === 'ArrowDown' ? +1 : -1;
+        this.navigate(target, dir);
         break;
       }
-      case 'ArrowUp': {
-        e.preventDefault();
-        const { next, prev, openTrigger } = this.getState();
-        if (document.dir !== 'rtl') {
-          if (next === -1) break;
-          this.focusNext();
-        } else {
-          if (prev === -1) break;
-          this.focusPrev({ focus: null });
-        }
-        if (openTrigger) {
-          this.open();
-        }
-        break;
-      }
+
       default:
         break;
     }
   };
 
   addEventListeners = () => {
-    this.localNav?.addEventListener('keydown', this.handleKeyDown);
+    this.localNav?.addEventListener('keydown', (e) => {
+      this.handleKeyDown(e);
+    });
     this.exitLink?.addEventListener('focus', (e) => {
       e.preventDefault();
       this.localNavTrigger?.focus();
