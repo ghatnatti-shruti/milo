@@ -131,6 +131,7 @@ class Popup {
         break;
       }
       case 'ArrowDown': {
+        debugger
         if (next === -1) {
           this.focusMainNavNext(isFooter);
           break;

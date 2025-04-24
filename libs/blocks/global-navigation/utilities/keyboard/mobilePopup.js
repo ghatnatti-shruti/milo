@@ -232,6 +232,7 @@ class Popup {
         break;
       }
       case 'ArrowDown': {
+        debugger
         if (newNav) break;
         this.mobileArrowDown({ next, element, isFooter });
         break;
