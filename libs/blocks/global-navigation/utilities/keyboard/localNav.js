@@ -1,4 +1,4 @@
-import { selectors, getNextVisibleItemPosition, getPreviousVisibleItemPosition, getOpenPopup } from './utils.js';
+import { selectors, getNextVisibleItemPosition, getPreviousVisibleItemPosition } from './utils.js';
 import { trigger } from '../utilities.js';
 
 const focusables = (root) =>
@@ -10,7 +10,6 @@ class LocalNavItem {
     this.localNavTrigger = this.localNav?.querySelector(selectors.localNavTitle);
     this.exitLink = this.localNav?.querySelector(selectors.localNavExit);
     this.addEventListeners();
-    this.desktop = window.matchMedia('(min-width: 900px)');
   }
 
   getState = () => {
@@ -36,13 +35,13 @@ class LocalNavItem {
     if (!triggerElement || !triggerElement.hasAttribute('aria-haspopup')) return;
     if (e) e.preventDefault();
     if (triggerElement.getAttribute('aria-expanded') === 'false') {
-      trigger({ element: triggerElement, type: 'localNavItem' });
+      const isHeader = triggerElement.classList.contains('feds-localnav-title');
+      if (isHeader) {
+        document.querySelector(selectors.localNav).classList.add('feds-localnav--active');
+      }
+      trigger({ element: triggerElement, type: isHeader ? 'headline' : 'localNavItem' });
     }
   };
-  
-  openDropdown = (triggerEl) => {
-    this.open({ triggerEl });
-  }
 
   getNavList = () => {
     const navItems = [...document.querySelector('.feds-localnav-items').children];
@@ -63,13 +62,21 @@ class LocalNavItem {
   navigate = (current, dir) => {
     const allItems = this.getNavList();
     const currIdx = allItems.indexOf(current);
-    const isHeader = current.classList.contains('feds-localnav-title')
+    const isHeader = current.classList.contains('feds-localnav-title');
+    const titleBtn = document.querySelector(`${selectors.localNav} > button`); 
     if (currIdx === -1 && !isHeader) return;
+    if (isHeader) {
+      this.open({ triggerEl: current })
+    }
+    if (dir === 1 && current === allItems.at(-1)) {
+      console.log('lat last item')
+      titleBtn.focus();
+      return;
+    }
     const next = allItems[(currIdx + dir + allItems.length) % allItems.length];
     next.focus();
-
     if (next.matches('[aria-haspopup="true"]')) {
-      this.openDropdown(next);
+      this.open({ triggerEl: next });
     }
   }
 
@@ -77,6 +84,11 @@ class LocalNavItem {
     const { code, target } = e;
     const isHeadline = target.classList.contains(selectors.headline.slice(1));
     switch (code) {
+      // case 'Tab':
+      //   if (target.matches('[aria-haspopup="true"]')) {
+      //     this.open({ triggerEl: next });
+      //   }
+      //   break
       case 'Space':
       case 'Enter':
         e.stopPropagation();
@@ -110,9 +122,7 @@ class LocalNavItem {
   };
 
   addEventListeners = () => {
-    this.localNav?.addEventListener('keydown', (e) => {
-      this.handleKeyDown(e);
-    });
+    this.localNav?.addEventListener('keydown', (e) => this.handleKeyDown(e));
     this.exitLink?.addEventListener('focus', (e) => {
       e.preventDefault();
       this.localNavTrigger?.focus();
