@@ -1,9 +1,7 @@
 import { selectors, getNextVisibleItemPosition, getPreviousVisibleItemPosition } from './utils.js';
 import { trigger } from '../utilities.js';
 
-const focusables = (root) =>
-    [...root.querySelectorAll('a[href],button:not([disabled])')];
-
+const focusables = (root) => [...root.querySelectorAll('a[href],button:not([disabled])')];
 class LocalNavItem {
   constructor() {
     this.localNav = document.querySelector(selectors.localNav);
@@ -12,7 +10,7 @@ class LocalNavItem {
     this.addEventListeners();
   }
 
-  getState = () => {
+  getState() {
     const items = [...document.querySelectorAll(selectors.localNavItems)];
     const openTrigger = document.querySelector(selectors.expandedPopupTrigger);
     const currentEl = document.activeElement
@@ -43,42 +41,46 @@ class LocalNavItem {
     }
   };
 
-  getNavList = () => {
+  getNavList() {
     const navItems = [...document.querySelector('.feds-localnav-items').children];
     const list = [];
 
-    navItems.forEach(item => {
-      const trigger  = item.querySelector('a,button');
-      if (!trigger) return;
+    navItems.forEach((item) => {
+      const triggerItem = item.querySelector('a,button');
+      if (!triggerItem) return;
 
-      list.push(trigger);
-      if (trigger.matches('[aria-haspopup="true"][aria-expanded="true"]')) {
+      list.push(triggerItem);
+      if (triggerItem.matches('[aria-haspopup="true"][aria-expanded="true"]')) {
         list.push(...focusables(item.querySelector('.feds-popup')));
       }
     });
     return list;
-  }
-  
+  };
+
   navigate = (current, dir) => {
-    const allItems = this.getNavList();
-    const currIdx = allItems.indexOf(current);
+    const items = this.getNavList();
+    const currIdx = items.indexOf(current);
     const isHeader = current.classList.contains('feds-localnav-title');
-    const titleBtn = document.querySelector(`${selectors.localNav} > button`); 
+    const titleBtn = document.querySelector(`${selectors.localNav} > button`);
     if (currIdx === -1 && !isHeader) return;
-    if (isHeader) {
-      this.open({ triggerEl: current })
-    }
-    if (dir === 1 && current === allItems.at(-1)) {
-      console.log('lat last item')
-      titleBtn.focus();
+    if (isHeader) this.open({ triggerEl: current });
+    if ((dir === 1 && current === items.at(-1)) || (dir === -1 && current === items.at(0))) {
+      titleBtn?.focus();
       return;
     }
-    const next = allItems[(currIdx + dir + allItems.length) % allItems.length];
+    const next = items[(currIdx + dir + items.length) % items.length];
     next.focus();
+
     if (next.matches('[aria-haspopup="true"]')) {
+      const isCollapsed = next.matches('[aria-expanded="false"]');
       this.open({ triggerEl: next });
+      // Focus on last item of the dropdown if arrow up
+      if (dir === -1 && isCollapsed) {
+        const dropdownItems = focusables(next.parentElement.querySelector('.feds-popup'));
+        dropdownItems.at(-1)?.focus();
+      }
     }
-  }
+  };
 
   handleKeyDown = (e) => {
     const { code, target } = e;
