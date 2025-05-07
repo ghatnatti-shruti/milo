@@ -86,11 +86,6 @@ class LocalNavItem {
     const { code, target } = e;
     const isHeadline = target.classList.contains(selectors.headline.slice(1));
     switch (code) {
-      // case 'Tab':
-      //   if (target.matches('[aria-haspopup="true"]')) {
-      //     this.open({ triggerEl: next });
-      //   }
-      //   break
       case 'Space':
       case 'Enter':
         e.stopPropagation();
@@ -124,7 +119,7 @@ class LocalNavItem {
   };
 
   addEventListeners = () => {
-    this.localNav?.addEventListener('keydown', (e) => this.handleKeyDown(e));
+    this.localNav?.addEventListener('keydown', this.handleKeyDown);
     this.exitLink?.addEventListener('focus', (e) => {
       e.preventDefault();
       this.localNavTrigger?.focus();
