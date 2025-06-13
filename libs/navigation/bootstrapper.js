@@ -1,8 +1,62 @@
+const loadScript = (url, type, { mode } = {}) => new Promise((resolve, reject) => {
+  let script = document.querySelector(`head > script[src="${url}"]`);
+  if (!script) {
+    const { head } = document;
+    script = document.createElement('script');
+    script.setAttribute('src', url);
+    if (type) {
+      script.setAttribute('type', type);
+    }
+    if (['async', 'defer'].includes(mode)) script.setAttribute(mode, true);
+    head.append(script);
+  }
+
+  if (script.dataset.loaded) {
+    resolve(script);
+    return;
+  }
+
+  const onScript = (event) => {
+    script.removeEventListener('load', onScript);
+    script.removeEventListener('error', onScript);
+
+    if (event.type === 'error') {
+      reject(new Error(`error loading script: ${script.src}`));
+    } else if (event.type === 'load') {
+      script.dataset.loaded = true;
+      resolve(script);
+    }
+  };
+
+  script.addEventListener('load', onScript);
+  script.addEventListener('error', onScript);
+});
+
+function createTag(tag, attributes, html, options = {}) {
+  const el = document.createElement(tag);
+  if (html) {
+    if (html.nodeType === Node.ELEMENT_NODE
+      || html instanceof SVGElement
+      || html instanceof DocumentFragment) {
+      el.append(html);
+    } else if (Array.isArray(html)) {
+      el.append(...html);
+    } else {
+      el.insertAdjacentHTML('beforeend', html);
+    }
+  }
+  if (attributes) {
+    Object.entries(attributes).forEach(([key, val]) => {
+      el.setAttribute(key, val);
+    });
+  }
+  options.parent?.append(el);
+  return el;
+}
+
 /* eslint import/no-relative-packages: 0 */
 export default async function bootstrapBlock(initBlock, blockConfig) {
   const { name, targetEl, layout, noBorder, jarvis } = blockConfig;
-  const { getConfig, createTag, loadScript } = await import('../utils/utils.js');
-
   const setNavLayout = () => {
     const element = document.querySelector(targetEl);
     if (layout === 'fullWidth') {
@@ -47,7 +101,7 @@ export default async function bootstrapBlock(initBlock, blockConfig) {
   if (blockConfig.targetEl === 'footer') {
     const { loadPrivacy } = await import('../scripts/delayed.js');
     setTimeout(() => {
-      loadPrivacy(getConfig, loadScript);
+      loadPrivacy(undefined, loadScript);
     }, blockConfig.delay);
   }
 

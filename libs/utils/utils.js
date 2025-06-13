@@ -277,7 +277,7 @@ function setupMiloObj(config) {
 }
 
 export const [setConfig, updateConfig, getConfig] = (() => {
-  let config = {};
+  let config = window.miloConfigs || {};
   return [
     (conf) => {
       const origin = conf.origin || window.location.origin;

@@ -1,4 +1,29 @@
-import { loadStyle } from '../utils/utils.js';
+function loadLink(href, {
+  id, as, callback, crossorigin, rel, fetchpriority,
+} = {}) {
+  let link = document.head.querySelector(`link[href="${href}"]`);
+  if (!link) {
+    link = document.createElement('link');
+    link.setAttribute('rel', rel);
+    if (id) link.setAttribute('id', id);
+    if (as) link.setAttribute('as', as);
+    if (crossorigin) link.setAttribute('crossorigin', crossorigin);
+    if (fetchpriority) link.setAttribute('fetchpriority', fetchpriority);
+    link.setAttribute('href', href);
+    if (callback) {
+      link.onload = (e) => callback(e.type);
+      link.onerror = (e) => callback(e.type);
+    }
+    document.head.appendChild(link);
+  } else if (callback) {
+    callback('noop');
+  }
+  return link;
+}
+
+function loadStyle(href, callback) {
+  return loadLink(href, { rel: 'stylesheet', callback });
+}
 
 const blockConfig = [
   {
@@ -104,11 +129,9 @@ export default async function loadBlock(configs, customLib) {
   // Relative paths work just fine since they exist in the context of this file's origin
   const [
     { default: bootstrapBlock },
-    { default: locales },
-    { setConfig, getConfig }] = await Promise.all([
+    { default: locales }] = await Promise.all([
     import('./bootstrapper.js'),
-    import('../utils/locales.js'),
-    import('../utils/utils.js'),
+    import('../utils/locales.js')
   ]);
   const paramConfigs = getParamsConfigs(configs);
   const origin = (() => {
@@ -134,12 +157,12 @@ export default async function loadBlock(configs, customLib) {
     onFooterError: footer?.onError,
     ...paramConfigs,
   };
-  setConfig(clientConfig);
+  window.miloConfigs = clientConfig;
   for await (const block of blockConfig) {
     const configBlock = configs[block.key];
 
     if (configBlock) {
-      const config = getConfig();
+      const config = window.miloConfigs;
       const gnavSource = `${config?.locale?.contentRoot}/gnav`;
       const footerSource = `${config?.locale?.contentRoot}/footer`;
       if (block.key === 'header') {
