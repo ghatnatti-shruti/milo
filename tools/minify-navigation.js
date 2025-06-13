@@ -12,13 +12,11 @@ if (!fs.existsSync(targetDir)) {
 }
 
 async function minifyFile(filePath, targetPath) {
-  console.log(`Processing file: ${filePath}`);
   const content = fs.readFileSync(filePath, 'utf8');
   const ext = path.extname(filePath);
 
   if (ext === '.js') {
     try {
-      console.log(`Minifying JS file: ${filePath}`);
       const result = await minify(content, {
         compress: true,
         mangle: true,
@@ -36,11 +34,9 @@ async function minifyFile(filePath, targetPath) {
           fs.mkdirSync(targetDir, { recursive: true });
         }
         fs.writeFileSync(targetPath, result.code);
-        console.log(`Successfully minified JS file: ${filePath}`);
         return true;
       } else {
         if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
-        console.error(`No minified code produced for: ${filePath}`);
         return false;
       }
     } catch (error) {
@@ -50,7 +46,6 @@ async function minifyFile(filePath, targetPath) {
     }
   } else if (ext === '.css') {
     try {
-      console.log(`Minifying CSS file: ${filePath}`);
       const result = new CleanCSS().minify(content);
       if (result.styles && result.styles.trim().length > 0) {
         // Ensure the target directory exists
@@ -59,16 +54,13 @@ async function minifyFile(filePath, targetPath) {
           fs.mkdirSync(targetDir, { recursive: true });
         }
         fs.writeFileSync(targetPath, result.styles);
-        console.log(`Successfully minified CSS file: ${filePath}`);
         return true;
       } else {
         if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
-        console.error(`No minified styles produced for: ${filePath}`);
         return false;
       }
     } catch (error) {
       if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
-      console.error(`Error minifying CSS file ${filePath}:`, error.message);
       return false;
     }
   }
@@ -86,10 +78,8 @@ async function processDirectory(srcDir, destDir) {
     const destPath = path.join(destDir, entry.name);
     
     if (entry.isDirectory()) {
-      console.log(`Found subdirectory: ${srcPath}`);
       await processDirectory(srcPath, destPath);
     } else if (entry.isFile() && (entry.name.endsWith('.js') || entry.name.endsWith('.css'))) {
-      console.log(`Found file to minify: ${srcPath}`);
       const success = await minifyFile(srcPath, destPath);
       if (success) {
         console.log(`Successfully processed ${srcPath} -> ${destPath}`);
