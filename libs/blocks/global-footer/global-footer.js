@@ -43,12 +43,17 @@ const base = miloLibs || codeRoot;
 const CONFIG = {
   socialPlatforms: ['facebook', 'instagram', 'twitter', 'linkedin', 'pinterest', 'discord', 'behance', 'youtube', 'weibo', 'social-media'],
   delays: { decoration: 3000 },
+  // Container width breakpoint for responsive behavior
+  containerBreakpoint: 900,
 };
 
 class Footer {
   constructor({ block } = {}) {
     this.block = block;
     this.elements = {};
+    this.resizeObserver = null;
+    this.resizeTimeout = null;
+    this.lastContainerWidth = null;
     this.init();
   }
 
@@ -77,8 +82,58 @@ class Footer {
       observer.disconnect();
       this.decorateContent();
     }, CONFIG.delays.decoration);
+
+    this.block.classList.contains('responsive-container') && this.initContainerResponsiveness();
   }, 'Error in global footer init', 'global-footer', 'e');
 
+  initContainerResponsiveness = () => {
+    this.removeContainerClasses();
+    this.resizeObserver = new ResizeObserver((entries) => {
+      clearTimeout(this.resizeTimeout);
+      this.resizeTimeout = setTimeout(() => {
+        try {
+          for (const entry of entries) {
+            const containerWidth = Math.round(entry.contentRect.width);
+            
+            if (containerWidth !== this.lastContainerWidth) {
+              this.lastContainerWidth = containerWidth;
+              this.updateContainerClass(containerWidth);
+            }
+          }
+        } catch (error) {
+          console.warn('ResizeObserver error:', error);
+        }
+      }, 16);
+    });
+
+    const parentElement = this.block.parentElement;
+    if (parentElement && this.block.classList.contains('responsive-container')) {
+      this.resizeObserver.observe(parentElement);
+      const initialWidth = Math.round(parentElement.offsetWidth);
+      this.lastContainerWidth = initialWidth;
+      this.updateContainerClass(initialWidth);
+    }
+  };
+
+  updateContainerClass = (containerWidth) => {
+    this.removeContainerClasses();
+    if (containerWidth < CONFIG.containerBreakpoint) {
+      this.block.classList.add('mobile');
+    }
+  };
+
+  removeContainerClasses = () => {
+    this.block.classList.remove('mobile');
+  };
+
+  destroy = () => {
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
+  
+    clearTimeout(this.resizeTimeout);
+    this.resizeTimeout = null;
+  };
+  
   decorateContent = () => logErrorFor(async () => {
     // Fetch footer content
     const url = getMetadata('footer-source') || `${locale.contentRoot}/footer`;
@@ -166,9 +221,13 @@ class Footer {
 
     await this.loadMenuLogic();
 
+    // Create context object for footer mobile state detection
+    const context = { footer: this.block };
+
     await this.decorateMenu({
       item: this.elements.footerMenu,
       type: 'footerMenu',
+      context,
     });
 
     this.elements.headlines = this.elements.footerMenu.querySelectorAll('.feds-menu-headline');
@@ -210,7 +269,9 @@ class Footer {
 
     if (placeholder && placeholder.length) {
       const headline = toFragment`<div class="feds-menu-headline">${placeholder}</div>`;
-      featureProductsSection.append(this.decorateHeadline(headline, 0));
+      // Create context object for footer mobile state detection
+      const context = { footer: this.block };
+      featureProductsSection.append(this.decorateHeadline(headline, 0, context));
     }
 
     const featuredProductsList = toFragment`<ul></ul>`;

@@ -19,6 +19,14 @@ import {
   setAriaAtributes,
 } from '../utilities.js';
 
+const isMobileFooter = (context) => {
+  const footer = context?.footer || document.querySelector('.global-footer');
+  return footer?.classList.contains('mobile') || false;
+};
+
+const getMobileState = (context) =>
+  context?.footer && document.querySelector('.global-footer.responsive-container') ? isMobileFooter(context) : !isDesktop.matches;
+
 function getAnalyticsValue(str, index) {
   if (typeof str !== 'string' || !str.length) return str;
 
@@ -46,7 +54,7 @@ function decorateCta({ elem, type = 'primaryCta', index } = {}) {
     </div>`;
 }
 
-const decorateHeadline = (elem, index) => {
+const decorateHeadline = (elem, index, context) => {
   if (!(elem instanceof HTMLElement)) return null;
 
   const headline = toFragment`<div class="feds-menu-headline">
@@ -54,13 +62,13 @@ const decorateHeadline = (elem, index) => {
     </div>`;
 
   const headlineClickHandler = (e) => {
-    if (isDesktop.matches) return;
+    if (!getMobileState(context)) return;
     trigger({ element: headline, event: e, type: 'headline' });
     setActiveDropdown(headline);
   };
 
   const setHeadlineAttributes = () => {
-    if (isDesktop.matches) {
+    if (!getMobileState(context)) {
       headline.setAttribute('role', 'heading');
       headline.removeAttribute('tabindex');
       headline.setAttribute('aria-level', 2);
@@ -80,7 +88,11 @@ const decorateHeadline = (elem, index) => {
   };
 
   setHeadlineAttributes();
-  isDesktop.addEventListener('change', setHeadlineAttributes);
+  
+  // Only add desktop media query listener if we're not in a footer context
+  if (!context || !context.footer) {
+    isDesktop.addEventListener('change', setHeadlineAttributes);
+  }
 
   // Since heading is turned into a div, it can be safely removed
   elem.remove();
@@ -243,7 +255,7 @@ const decoratePromo = (elem, index) => {
     </div>`;
 };
 
-const decorateColumns = async ({ content, separatorTagName = 'H5' } = {}) => {
+const decorateColumns = async ({ content, separatorTagName = 'H5', context } = {}) => {
   const hasMultipleColumns = content.children.length > 1;
   // Headline index is defined in the context of a whole menu
   let headlineIndex = 0;
@@ -290,7 +302,7 @@ const decorateColumns = async ({ content, separatorTagName = 'H5' } = {}) => {
 
         // Analysts requested no headings in the dropdowns,
         // turning it into a simple div
-        const sectionHeadline = decorateHeadline(columnElem, headlineIndex);
+        const sectionHeadline = decorateHeadline(columnElem, headlineIndex, context);
         menuItems = toFragment`<div class="feds-menu-items" daa-lh="${getAnalyticsValue(sectionHeadline.textContent.trim())}"></div>`;
 
         itemDestination.append(sectionHeadline, menuItems);
@@ -302,7 +314,7 @@ const decorateColumns = async ({ content, separatorTagName = 'H5' } = {}) => {
           const wideColumn = document.createElement('div');
           wideColumn.append(...column.childNodes);
           menuItems.append(wideColumn);
-          await decorateColumns({ content: menuItems });
+          await decorateColumns({ content: menuItems, context });
         }
       } else if (columnElem.matches(selectors.gnavPromo)) {
         // When encountering a promo, add the previous section to the column
@@ -372,6 +384,11 @@ const decorateCrossCloudMenu = (content) => {
 let asyncDropDownCount = 0;
 const decorateMenu = (config) => logErrorFor(async () => {
   let menuTemplate;
+  
+  const context = {
+    footer: config.item?.closest('.global-footer') || document.querySelector('.global-footer')
+  };
+  
   if (config.type === 'syncDropdownTrigger') {
     const itemTopParent = config.item.closest('div');
     // The initial heading is already part of the item template,
@@ -383,7 +400,7 @@ const decorateMenu = (config) => logErrorFor(async () => {
         ${itemTopParent}
       </div>`;
 
-    await decorateColumns({ content: menuTemplate });
+    await decorateColumns({ content: menuTemplate, context });
   }
 
   if (config.type === 'asyncDropdownTrigger') {
@@ -404,7 +421,7 @@ const decorateMenu = (config) => logErrorFor(async () => {
 
     decorateCrossCloudMenu(menuTemplate);
 
-    await decorateColumns({ content: menuContent });
+    await decorateColumns({ content: menuContent, context });
 
     if (getActiveLink(menuTemplate) instanceof HTMLElement) {
       // Special handling on desktop, as content is loaded async;
@@ -416,10 +433,13 @@ const decorateMenu = (config) => logErrorFor(async () => {
       };
 
       config.template.classList.add(selectors.activeNavItem.slice(1));
-      if (isDesktop.matches) {
+      if (!getMobileState(context)) {
         config.template.style.width = `${config.template.offsetWidth}px`;
         config.template.classList.add(selectors.deferredActiveNavItem.slice(1));
-        isDesktop.addEventListener('change', resetActiveState, { once: true });
+        // Only add desktop media query listener if we're not in a footer context
+        if (!context.footer) {
+          isDesktop.addEventListener('change', resetActiveState, { once: true });
+        }
         window.addEventListener('feds:navOverflow', resetActiveState, { once: true });
       }
     }
@@ -440,7 +460,7 @@ const decorateMenu = (config) => logErrorFor(async () => {
   }
 
   if (config.type === 'footerMenu') {
-    await decorateColumns({ content: config.item, separatorTagName: 'H2' });
+    await decorateColumns({ content: config.item, separatorTagName: 'H2', context });
   }
 
   // Remove the loading state created in delayDropdownDecoration
