@@ -88,12 +88,24 @@ const decorateHeadline = (elem, index, context) => {
   };
 
   setHeadlineAttributes();
-  
-  // Only add desktop media query listener if we're not in a footer context
-  if (!context || !context.footer) {
-    isDesktop.addEventListener('change', setHeadlineAttributes);
-  }
 
+  isDesktop.addEventListener('change', setHeadlineAttributes);
+
+  if (document.querySelector('.global-footer.responsive-container')) {
+    let lastMobileState = getMobileState(context);
+    const resizeObserver = new ResizeObserver(() => {
+      const currentMobileState = getMobileState(context);
+      if (currentMobileState !== lastMobileState) {
+        lastMobileState = currentMobileState;
+        setHeadlineAttributes();
+      }
+    });
+    const parentElement = context.footer.parentElement;
+    if (parentElement) {
+      resizeObserver.observe(parentElement);
+    }
+    headline._footerResizeObserver = resizeObserver;
+  }
   // Since heading is turned into a div, it can be safely removed
   elem.remove();
 
@@ -472,4 +484,11 @@ const decorateMenu = (config) => logErrorFor(async () => {
   }
 }, 'Decorate menu failed', 'gnav-menu', 'i');
 
-export default { decorateMenu, decorateLinkGroup, decorateHeadline };
+const cleanupHeadlineObservers = (headlineElement) => {
+  if (headlineElement && headlineElement._footerResizeObserver) {
+    headlineElement._footerResizeObserver.disconnect();
+    delete headlineElement._footerResizeObserver;
+  }
+};
+
+export default { decorateMenu, decorateLinkGroup, decorateHeadline, cleanupHeadlineObservers };

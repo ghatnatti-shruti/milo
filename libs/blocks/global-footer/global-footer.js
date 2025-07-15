@@ -90,6 +90,7 @@ class Footer {
     this.removeContainerClasses();
     this.resizeObserver = new ResizeObserver((entries) => {
       clearTimeout(this.resizeTimeout);
+
       this.resizeTimeout = setTimeout(() => {
         try {
           for (const entry of entries) {
@@ -129,9 +130,14 @@ class Footer {
   destroy = () => {
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
-  
     clearTimeout(this.resizeTimeout);
     this.resizeTimeout = null;
+    
+    if (this.elements.headlines) {
+      this.elements.headlines.forEach(headline => {
+        this.cleanupHeadlineObservers?.(headline);
+      });
+    }
   };
   
   decorateContent = () => logErrorFor(async () => {
@@ -204,6 +210,7 @@ class Footer {
       this.decorateMenu = menuLogic.decorateMenu;
       this.decorateLinkGroup = menuLogic.decorateLinkGroup;
       this.decorateHeadline = menuLogic.decorateHeadline;
+      this.cleanupHeadlineObservers = menuLogic.cleanupHeadlineObservers;
       resolve();
     });
 
@@ -221,7 +228,6 @@ class Footer {
 
     await this.loadMenuLogic();
 
-    // Create context object for footer mobile state detection
     const context = { footer: this.block };
 
     await this.decorateMenu({
@@ -269,7 +275,6 @@ class Footer {
 
     if (placeholder && placeholder.length) {
       const headline = toFragment`<div class="feds-menu-headline">${placeholder}</div>`;
-      // Create context object for footer mobile state detection
       const context = { footer: this.block };
       featureProductsSection.append(this.decorateHeadline(headline, 0, context));
     }

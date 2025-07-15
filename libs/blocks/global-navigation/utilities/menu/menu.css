@@ -199,11 +199,7 @@ content auhtored manually and AEM-imported content */
     border-bottom: none;
   }
 
-  .global-footer:not(.mobile) .feds-menu-section + .feds-menu-section {
-    margin-top: 12px;
-  }
-
-  .global-navigation .feds-menu-section + .feds-menu-section {
+  .feds-menu-section + .feds-menu-section {
     margin-top: 12px;
   }
 
