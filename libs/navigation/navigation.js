@@ -176,7 +176,7 @@ export default async function loadBlock(configs, customLib) {
         });
         try {
           const { default: init } = await import('../blocks/global-footer/global-footer.js');
-          await bootstrapBlock(init, { ...block, footerSource });
+          await bootstrapBlock(init, { ...block, footerSource, isContainerResponsive: configBlock.isContainerResponsive });
         } catch (e) {
           configBlock.onError?.(e);
           window.lana.log(`${e.message} | footer-source: ${footerSource} | href: ${window.location.href}`, {

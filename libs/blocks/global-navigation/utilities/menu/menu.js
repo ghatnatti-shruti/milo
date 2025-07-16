@@ -19,13 +19,13 @@ import {
   setAriaAtributes,
 } from '../utilities.js';
 
-const isMobileFooter = (context) => {
+const isResponsiveMobileFooter = (context) => {
   const footer = context?.footer || document.querySelector('.global-footer');
   return footer?.classList.contains('mobile') || false;
 };
 
 const getMobileState = (context) =>
-  context?.footer && document.querySelector('.global-footer.responsive-container') ? isMobileFooter(context) : !isDesktop.matches;
+  context?.footer && document.querySelector('.global-footer.responsive-container') ? isResponsiveMobileFooter(context) : !isDesktop.matches;
 
 function getAnalyticsValue(str, index) {
   if (typeof str !== 'string' || !str.length) return str;
@@ -448,8 +448,7 @@ const decorateMenu = (config) => logErrorFor(async () => {
       if (!getMobileState(context)) {
         config.template.style.width = `${config.template.offsetWidth}px`;
         config.template.classList.add(selectors.deferredActiveNavItem.slice(1));
-        // Only add desktop media query listener if we're not in a footer context
-        if (!context.footer) {
+        if (!context || !context.footer) {
           isDesktop.addEventListener('change', resetActiveState, { once: true });
         }
         window.addEventListener('feds:navOverflow', resetActiveState, { once: true });

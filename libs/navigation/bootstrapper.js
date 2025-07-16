@@ -40,7 +40,11 @@ export default async function bootstrapBlock(initBlock, blockConfig) {
     });
     if (blockConfig.isLocalNav) {
       const localNavWrapper = createTag('div', { class: 'feds-localnav' });
-      document.querySelector('header').after(localNavWrapper);
+      document.querySelector('header.global-navigation').after(localNavWrapper);
+    }
+  } else {
+    if (blockConfig.isContainerResponsive) {
+      document.querySelector('footer.global-footer').classList.add('responsive-container');
     }
   }
 

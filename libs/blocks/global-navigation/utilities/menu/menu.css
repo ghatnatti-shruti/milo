@@ -203,13 +203,11 @@ content auhtored manually and AEM-imported content */
     margin-top: 12px;
   }
 
-  .global-footer:not(.mobile) .feds-menu-headline {
-    position: static;
-    margin: 0 32px;
-    cursor: default;
+  .global-footer:not(.mobile) .feds-menu-section + .feds-menu-section {
+    margin-top: 12px;
   }
-  
-  .global-navigation .feds-menu-headline {
+
+  .global-footer:not(.mobile) .feds-menu-headline {
     position: static;
     margin: 0 32px;
     cursor: default;
@@ -227,6 +225,9 @@ content auhtored manually and AEM-imported content */
 
   .global-navigation .feds-menu-headline {
     margin-bottom: 12px;
+    position: static;
+    margin: 0 32px;
+    cursor: default;
   }
 
   .feds-menu-column--group .feds-menu-headline {

@@ -43,7 +43,6 @@ const base = miloLibs || codeRoot;
 const CONFIG = {
   socialPlatforms: ['facebook', 'instagram', 'twitter', 'linkedin', 'pinterest', 'discord', 'behance', 'youtube', 'weibo', 'social-media'],
   delays: { decoration: 3000 },
-  // Container width breakpoint for responsive behavior
   containerBreakpoint: 900,
 };
 
