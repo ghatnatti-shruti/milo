@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { html, render, useContext, useState, useEffect } from '../../deps/htm-preact.js';
 import { utf8ToB64, loadBlock, createTag } from '../../utils/utils.js';
 import { ConfiguratorContext, ConfiguratorProvider, saveStateToLocalStorage, loadStateFromLocalStorage } from './context.js';

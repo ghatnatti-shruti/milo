@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { html, useContext, useState, useEffect } from '../../deps/htm-preact.js';
 import { ConfiguratorContext } from './context.js';
 import { Select } from '../../ui/controls/formControls.js';
