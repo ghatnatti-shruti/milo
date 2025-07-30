@@ -75,6 +75,8 @@ function getBlockData(el) {
   return { fontSizes, options: { ...getOpts(el) } };
 }
 
+function getHeadingText(el) { return el.querySelector('h1, h2, h3, h4, h5, h6, strong')?.textContent.trim(); }
+
 export function findFocusableInSection(section, selSelector, focSelector) {
   if (!section) return null;
 
@@ -220,7 +222,7 @@ function curtainCallback(el) {
   document.body.classList.add('mobile-disable-scroll');
   el.insertAdjacentElement('afterend', curtain);
   el.setAttribute('role', 'dialog');
-  el.setAttribute('aria-label', 'Promo Banner Dialog');
+  el.setAttribute('aria-label', `${getHeadingText(el)} Dialog` || 'Promo Banner Dialog');
   el.setAttribute('aria-modal', 'true');
 
   const focusableElements = [...el.querySelectorAll(focusableNotificationElements)];
@@ -408,7 +410,8 @@ export default async function init(el) {
       .find((item) => item === 'sticky-top' || item === 'sticky-bottom');
     if (!stickyClass) return;
 
-    el.setAttribute('aria-label', stickyClass === 'sticky-bottom' ? 'Promo Banner Bottom' : 'Promo Banner Top');
+    el.setAttribute('aria-label', getHeadingText(el)
+       || (stickyClass === 'sticky-bottom' ? 'Promo Banner Bottom' : 'Promo Banner Top'));
     el.setAttribute('role', 'region');
   }, 300);
 }
