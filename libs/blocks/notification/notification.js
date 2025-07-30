@@ -220,6 +220,7 @@ function curtainCallback(el) {
   document.body.classList.add('mobile-disable-scroll');
   el.insertAdjacentElement('afterend', curtain);
   el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-label', 'Promo Banner Dialog');
   el.setAttribute('aria-modal', 'true');
 
   const focusableElements = [...el.querySelectorAll(focusableNotificationElements)];
@@ -378,8 +379,6 @@ async function decorateLayout(el) {
 
 export default async function init(el) {
   el.classList.add('con-block');
-  el.setAttribute('aria-label', 'Promo Banner');
-  el.setAttribute('role', 'region');
   const { fontSizes, options } = getBlockData(el);
   const blockText = await decorateLayout(el);
   decorateBlockText(blockText, fontSizes);
@@ -403,4 +402,13 @@ export default async function init(el) {
     tabindex: '-1',
     'data-notification-id': notificationId,
   }, ''));
+
+  setTimeout(() => {
+    const stickyClass = [...el.closest('.section').classList]
+      .find((item) => item === 'sticky-top' || item === 'sticky-bottom');
+    if (!stickyClass) return;
+
+    el.setAttribute('aria-label', stickyClass === 'sticky-bottom' ? 'Promo Banner Bottom' : 'Promo Banner Top');
+    el.setAttribute('role', 'region');
+  }, 300);
 }
