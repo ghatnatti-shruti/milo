@@ -177,7 +177,7 @@ function addCloseAction(el, btn) {
 }
 
 function decorateClose(el) {
-  const btn = createTag('button', { 'aria-label': 'Close Promo Banner', class: 'close' }, closeSvg);
+  const btn = createTag('button', { 'aria-label': 'Close Promotional Banner', class: 'close' }, closeSvg);
   addCloseAction(el, btn);
   el.appendChild(btn);
 }
@@ -222,7 +222,7 @@ function curtainCallback(el) {
   document.body.classList.add('mobile-disable-scroll');
   el.insertAdjacentElement('afterend', curtain);
   el.setAttribute('role', 'dialog');
-  el.setAttribute('aria-label', `${getHeadingText(el)} Dialog` || 'Promo Banner Dialog');
+  el.setAttribute('aria-label', `${getHeadingText(el)} Dialog` || 'Promotional Banner Dialog');
   el.setAttribute('aria-modal', 'true');
 
   const focusableElements = [...el.querySelectorAll(focusableNotificationElements)];
@@ -411,7 +411,7 @@ export default async function init(el) {
     if (!stickyClass) return;
 
     el.setAttribute('aria-label', getHeadingText(el)
-       || (stickyClass === 'sticky-bottom' ? 'Promo Banner Bottom' : 'Promo Banner Top'));
+       || (stickyClass === 'sticky-bottom' ? 'Promotional Banner Bottom' : 'Promotional Banner Top'));
     el.setAttribute('role', 'region');
   }, 300);
 }
