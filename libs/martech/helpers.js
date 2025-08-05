@@ -190,7 +190,7 @@ function getEngagedSecondVisits() {
   ];
 
   const consentCookieValue = getCookie(OPT_ON_AND_CONSENT_COOKIE);
-  const secondVisits = [];
+  const secondVisits = { };
 
   if (consentCookieValue?.includes('C0002:0')) {
     return null;
@@ -229,9 +229,8 @@ function getEngagedSecondVisits() {
       nextVisit = 1;
       setVisitCount(visitKey, nextVisit);
 
-      secondVisits.push({
+      secondVisits[visitKey].push({
         domain: host,
-        event: visitKey,
         privacy,
         visit: nextVisit,
       });
@@ -241,9 +240,8 @@ function getEngagedSecondVisits() {
       if (update && attempt < 2) {
         nextVisit = attempt + 1;
         setVisitCount(visitKey, nextVisit);
-        secondVisits.push({
+        secondVisits[visitKey].push({
           domain: host,
-          event: visitKey,
           privacy,
           visit: nextVisit,
         });
